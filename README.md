@@ -113,7 +113,7 @@ docker-compose.yml
 ## Blog post
 
 Full write-up covering sliding windows, baseline learning, detection logic, and iptables blocking:
-https://dev.to/meseretak/hng-anomaly-detection-engine
+https://dev.to/meseret_akalu_1743b6f6aa5/devops-track-3-4-20l2
 
 ---
 
