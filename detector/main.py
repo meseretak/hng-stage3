@@ -4,6 +4,7 @@ Entry point — wires all modules together and runs the main loop.
 """
 import time
 import sys
+import subprocess
 
 from config import CFG
 from monitor import tail_log
@@ -14,6 +15,16 @@ from unbanner import start_unbanner
 from dashboard import start_dashboard, update_state
 
 print("[main] Starting HNG anomaly detection daemon...")
+
+# Ensure iptables default policy is ACCEPT so the server stays reachable.
+# We only add per-IP DROP rules — never block all traffic by default.
+try:
+    subprocess.run(["iptables", "-P", "INPUT", "ACCEPT"], check=True, capture_output=True)
+    subprocess.run(["iptables", "-P", "FORWARD", "ACCEPT"], check=True, capture_output=True)
+    subprocess.run(["iptables", "-P", "OUTPUT", "ACCEPT"], check=True, capture_output=True)
+    print("[main] iptables default policy set to ACCEPT")
+except Exception as e:
+    print(f"[main] Warning: could not set iptables policy: {e}")
 
 # Initialise components
 window = SlidingWindow(window_seconds=CFG["per_ip_window_seconds"])
