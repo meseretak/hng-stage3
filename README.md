@@ -2,8 +2,8 @@
 
 This is a real-time traffic anomaly detector I built for HNG Stage 3. It sits next to Nginx, watches every incoming request, figures out what "normal" traffic looks like, and automatically blocks IPs that go way beyond that — no manual intervention needed.
 
-**Live dashboard:** http://136.115.145.233:8080
-**Server:** 136.115.145.233
+**Live dashboard:** http://35.223.71.226/dashboard/
+**Server:** 35.223.71.226
 **Language:** Python
 
 ---

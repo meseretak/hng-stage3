@@ -39,11 +39,13 @@ print(f"[main] Dashboard at http://0.0.0.0:{CFG['dashboard_port']}")
 print(f"[main] Tailing log: {CFG['log_path']}")
 
 _last_state_update = 0
+_logs_processed = 0
 
 # Main loop — process log lines as they arrive
 for entry in tail_log(CFG["log_path"]):
     ip = entry["source_ip"]
     is_error = entry["status"] >= 400
+    _logs_processed += 1
 
     # Feed into sliding window and baseline
     window.record(ip, is_error=is_error)
@@ -60,5 +62,6 @@ for entry in tail_log(CFG["log_path"]):
             top_ips=window.top_ips(10),
             mean=baseline.effective_mean,
             stddev=baseline.effective_stddev,
+            logs_processed=_logs_processed,
         )
         _last_state_update = now
