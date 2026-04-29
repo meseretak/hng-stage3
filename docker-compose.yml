@@ -30,10 +30,9 @@ services:
   detector:
     build: ./detector
     restart: unless-stopped
-    ports:
-      - "8080:8080"
+    network_mode: host          # needs host network to run iptables
     cap_add:
-      - NET_ADMIN
+      - NET_ADMIN               # required for iptables
     volumes:
       - HNG-nginx-logs:/var/log/nginx:ro
       - detector_logs:/var/log/detector
@@ -41,8 +40,6 @@ services:
       SLACK_WEBHOOK_URL: ${SLACK_WEBHOOK_URL:-}
     depends_on:
       - nginx
-    networks:
-      - internal
 
 volumes:
   nextcloud_data:
