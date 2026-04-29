@@ -9,7 +9,7 @@ from audit import write_audit
 from notifier import alert_ban, alert_unban
 from config import CFG
 
-# ban_state: ip -> {"banned_at": float, "level": int, "duration_min": int}
+# ban_state: ip -> {banned_at, level, duration_min, condition, rate, baseline}
 _ban_state = {}
 _lock = threading.Lock()
 
@@ -26,9 +26,12 @@ def ban_ip(ip, condition, rate, baseline):
 
         _iptables("I", ip)
         _ban_state[ip] = {
-            "banned_at": time.time(),
-            "level": level,
+            "banned_at":   time.time(),
+            "level":       level,
             "duration_min": duration_min,
+            "condition":   condition,
+            "rate":        round(rate, 4),
+            "baseline":    round(baseline, 4),
         }
 
     alert_ban(ip, condition, rate, baseline, duration_min)
@@ -50,7 +53,10 @@ def unban_ip(ip):
 
         _iptables("D", ip)
         duration_min = state["duration_min"]
-        level = state["level"]
+        level        = state["level"]
+        condition    = state.get("condition", "")
+        rate         = state.get("rate", 0)
+        baseline     = state.get("baseline", 0)
         del _ban_state[ip]
 
     alert_unban(ip, duration_min)
@@ -70,9 +76,12 @@ def unban_ip(ip):
         with _lock:
             _iptables("I", ip)
             _ban_state[ip] = {
-                "banned_at": time.time(),
-                "level": next_level,
+                "banned_at":   time.time(),
+                "level":       next_level,
                 "duration_min": next_duration,
+                "condition":   condition,
+                "rate":        rate,
+                "baseline":    baseline,
             }
         write_audit(
             action="REBAN",

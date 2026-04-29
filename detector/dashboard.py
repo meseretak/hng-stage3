@@ -343,13 +343,15 @@ HTML = """<!DOCTYPE html>
         <thead>
           <tr>
             <th>IP Address</th>
+            <th>Condition</th>
+            <th>Rate (req/s)</th>
+            <th>Baseline</th>
             <th>Duration</th>
-            <th>Ban Level</th>
-            <th>Threat</th>
+            <th>Banned At</th>
           </tr>
         </thead>
         <tbody id="ban-body">
-          <tr class="empty-row"><td colspan="4">No active bans — all clear</td></tr>
+          <tr class="empty-row"><td colspan="6">No active bans — all clear</td></tr>
         </tbody>
       </table>
     </div>
@@ -432,18 +434,16 @@ HTML = """<!DOCTYPE html>
       // Banned IPs table
       const banBody = document.getElementById('ban-body');
       if (banCount === 0) {
-        banBody.innerHTML = '<tr class="empty-row"><td colspan="4">No active bans — all clear ✅</td></tr>';
+        banBody.innerHTML = '<tr class="empty-row"><td colspan="6">No active bans — all clear ✅</td></tr>';
       } else {
         banBody.innerHTML = Object.entries(d.banned).map(([ip, info]) => `
           <tr>
             <td class="ip-ban">${ip}</td>
-            <td>${info.duration_min} min</td>
-            <td class="level-${info.level}">${levelLabel(info.level)}</td>
-            <td>
-              <div style="width:80px;height:6px;background:var(--border);border-radius:3px;overflow:hidden">
-                <div style="width:${Math.min(100,(info.level+1)*33)}%;height:100%;background:${threatColor(info.level)};border-radius:3px"></div>
-              </div>
-            </td>
+            <td style="font-size:0.8rem;color:var(--orange);max-width:220px;word-break:break-word">${info.condition}</td>
+            <td style="font-family:monospace;color:var(--red)">${Number(info.rate).toFixed(4)}</td>
+            <td style="font-family:monospace;color:var(--grey)">${Number(info.baseline).toFixed(4)}</td>
+            <td><span class="badge badge-red">${info.duration_min} min</span></td>
+            <td style="color:var(--grey);font-size:0.82rem">${info.banned_at}</td>
           </tr>`).join('');
       }
 
@@ -493,9 +493,14 @@ def status():
 
     bans = {}
     for ip, info in banned_ips().items():
+        banned_at_ts = info.get("banned_at", 0)
         bans[ip] = {
             "duration_min": info["duration_min"],
-            "level": info["level"],
+            "level":        info["level"],
+            "condition":    info.get("condition", "—"),
+            "rate":         info.get("rate", 0),
+            "baseline":     info.get("baseline", 0),
+            "banned_at":    time.strftime("%H:%M:%S", time.localtime(banned_at_ts)),
         }
 
     return jsonify({
