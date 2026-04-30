@@ -4,9 +4,9 @@ Flask dashboard — modern UI with cards, charts, and live updates.
 import time
 import threading
 import psutil
-from flask import Flask, jsonify, render_template_string
+from flask import Flask, jsonify, render_template_string, request
 
-from blocker import banned_ips
+from blocker import banned_ips, ban_ip, unban_ip
 from config import CFG
 
 app = Flask(__name__)
@@ -522,6 +522,28 @@ def update_state(global_rps, top_ips, mean, stddev, logs_processed=0):
     _state["mean"]           = mean
     _state["stddev"]         = stddev
     _state["logs_processed"] = logs_processed
+
+
+@app.route("/api/ban", methods=["POST"])
+def api_ban():
+    """POST /api/ban  body: {"ip": "1.2.3.4"}"""
+    data = request.get_json(force=True) or {}
+    ip = data.get("ip", "").strip()
+    if not ip:
+        return jsonify({"error": "ip required"}), 400
+    ban_ip(ip, "manual-ban via API", 99.0, 1.0)
+    return jsonify({"status": "banned", "ip": ip})
+
+
+@app.route("/api/unban", methods=["POST"])
+def api_unban():
+    """POST /api/unban  body: {"ip": "1.2.3.4"}"""
+    data = request.get_json(force=True) or {}
+    ip = data.get("ip", "").strip()
+    if not ip:
+        return jsonify({"error": "ip required"}), 400
+    unban_ip(ip)
+    return jsonify({"status": "unbanned", "ip": ip})
 
 
 def start_dashboard():
